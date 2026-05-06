@@ -1,0 +1,22 @@
+{
+  "or": "or",
+  "comments": "Comments",
+  "share": "Share",
+  "posts": "Posts",
+  "create": "Create",
+  "cancel": "Cancel",
+  "reply": "Reply",
+  "joinCommunity": "Join Community",
+  "backToFeed": "Back to Feed",
+  "communities": "Communities",
+  "home": "Home",
+  "popular": "Popular",
+  "title": "Title",
+  "description": "Description",
+  "addImage": "Add Image",
+  "createAPost": "Create a Post",
+  "chooseACommunity": "Choose a Community",
+  "name": "Name",
+  "createACommunity": "Create a new Community",
+  "feed": "Feed"
+}
