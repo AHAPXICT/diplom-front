@@ -1,10 +1,14 @@
-import {Avatar, Box, Button, ButtonGroup, Card, Divider, Stack, Tab, Tabs, Typography} from "@mui/material";
+import {Avatar, Box, Card, Divider, Stack, Tab, Tabs, Typography} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import {PostCard} from "../components/PostCard.tsx";
 import {BackToFeedButton} from "../components/BackToFeedButton.tsx";
 import {useState} from "react";
+import {styled} from "@mui/material/styles";
+import LogOutButton from "../components/LogOutButton.tsx";
+import {ChangeProfileButton} from "../components/ChangeProfileButton.tsx";
+import type {Post} from "../mockData.ts";
 
-function TextElement({text, label}: {text: string, label: string}) {
+function TextElement({text, label}: { text: string, label: string }) {
     return <Box>
         <Typography variant="h6" fontWeight="bold">
             {text}
@@ -15,6 +19,10 @@ function TextElement({text, label}: {text: string, label: string}) {
     </Box>
 }
 
+const TabPanelNoPadding = styled(TabPanel)(({theme}) => ({
+    padding: 0,
+    margin: 0,
+}));
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -22,16 +30,16 @@ interface TabPanelProps {
     index: number;
 }
 
-function TabPanel({ children, value, index }: TabPanelProps) {
+function TabPanel({children, value, index}: TabPanelProps) {
     return (
         <div role="tabpanel" hidden={value !== index}>
-            {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
+            {value === index && <Box sx={{pt: 2}}>{children}</Box>}
         </div>
     );
 }
 
 export default function User() {
-    const { t } = useTranslation('auth');
+    const {t} = useTranslation('auth');
     const [tab, setTab] = useState<number>(0);
 
     const handleChange = (
@@ -41,14 +49,22 @@ export default function User() {
         setTab(newValue);
     };
 
+    const [username, setUsername] = useState<string>("");
+    const [birthday, setBirthday] = useState<string>("");
+    const [rating, setRating] = useState<number>(0);
+    const [postsNumber, setPostsNumber] = useState<number>(0);
+    const [commentsNumber, setCommentsNumber] = useState<number>(0);
+
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [about, setAbout] = useState<string>(t('common:nothingAbout'));
 
     return (
         <Box>
-            <BackToFeedButton />
+            <BackToFeedButton/>
             <Card sx={{p: 0, my: 2}}>
-                <Box sx={{ background: "linear-gradient(90deg, #5f9cff, #7b4dff)",  height: 140 }}/>
-                <Box sx={{position: "relative", m: 2 }}>
-                    <Box sx={{ display: "flex"}}>
+                <Box sx={{background: "linear-gradient(90deg, #5f9cff, #7b4dff)", height: 140}}/>
+                <Box sx={{position: "relative", m: 2}}>
+                    <Box sx={{display: "flex", height: 80}} >
                         <Avatar
                             sx={{
                                 width: 100,
@@ -58,24 +74,28 @@ export default function User() {
                                 top: -50,
                             }}
                         />
-                        <Typography variant="h5" fontWeight="bold" component="div">Username</Typography>
+                        <Typography variant="h5" fontWeight="bold" component="div">{username}</Typography>
+                        <Box sx={{ flexGrow: 1 }} />
+                        <LogOutButton />
                     </Box>
-                    <Box sx={{  }}>
+                    <Box sx={{}}>
                         <Typography variant="body2" color="text.secondary">
-                            🎂 Cake day: 1/15/2023 • Joined over 3 years ago
+                            🎂 {t('common:cakeDay')}: {birthday}
                         </Typography>
                     </Box>
 
-                    <Divider sx={{ my: 2 }} />
+                    <Divider sx={{my: 2}}/>
 
-                    <Stack direction="row" spacing={4}>
-                            <TextElement text="5, 420" label={t("common:karma")}></TextElement>
-                            <TextElement text="898" label={t("common:posts")}></TextElement>
-                            <TextElement text="5, 420" label={t("common:comments")}></TextElement>
+                    <Stack direction="row" alignItems='center' spacing={4}>
+                            <TextElement text={rating.toString()} label={t("common:karma")}></TextElement>
+                            <TextElement text={postsNumber.toString()} label={t("common:posts")}></TextElement>
+                            <TextElement text={commentsNumber.toString()} label={t("common:comments")}></TextElement>
+                        <Box sx={{ flexGrow: 1 }} />
+                            <ChangeProfileButton />
                     </Stack>
                 </Box>
             </Card>
-            <Card>
+            <Card sx={{p: 0}}>
                 <Tabs
                     value={tab}
                     onChange={handleChange}
@@ -93,24 +113,25 @@ export default function User() {
                             fontSize: 15,
                             minHeight: 48,
                             px: 2,
-                            color: "#6b7280",
                         },
-                        "& .Mui-selected": {
-                            color: "#1976d2",
-                        },
+                        borderBottom: (theme) => `1px solid ${theme.palette.divider}`
                     }}
                 >
-                    <Tab label="Posts" />
-                    <Tab label="Comments" />
-                    <Tab label="About" />
+                    <Tab label={t('common:posts')}/>
+                    <Tab label={t('common:about')}/>
                 </Tabs>
-                <TabPanel value={tab} index={0}>
-                    <PostCard />
-                </TabPanel>
-                    <TabPanel value={tab} index={1}>
-                        <Typography>About content</Typography>
-                    </TabPanel>
-                <Divider />
+                <Box sx={{m: 2}}>
+                    <TabPanelNoPadding value={tab} index={0}>
+                        {/*если нету постов то юзать nothingPosts*/}
+                        {posts.map((post, index) => (
+                            <PostCard />
+                        ))}
+                        <PostCard/>
+                    </TabPanelNoPadding>
+                    <TabPanelNoPadding value={tab} index={1}>
+                        <Typography>{about}</Typography>
+                    </TabPanelNoPadding>
+                </Box>
             </Card>
         </Box>
     );

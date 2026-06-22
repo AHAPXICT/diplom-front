@@ -11,6 +11,7 @@ export function BackToFeedButton() {
             startIcon={<KeyboardBackspaceIcon />}
             component={Link}
             to={'/'}
+            sx={{mb: 2}}
         >
             {t('common:backToFeed')}
         </Button>

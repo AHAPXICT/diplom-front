@@ -13,6 +13,15 @@ import { AuthLayout } from "./pages/AuthLayout.tsx";
 import { Feed } from "./pages/Feed.tsx";
 import { CreatePost } from "./pages/CreatePost.tsx";
 import {Communities} from "./pages/Communities.tsx";
+import {Popular} from "./pages/Popular.tsx";
+import Register from "./pages/Register.tsx";
+import {PostComments} from "./pages/PostComments.tsx";
+import {ProtectedRoute} from "./components/ProtectedRoute.tsx";
+import {GuestRoute} from "./components/GuestRoute.tsx";
+import { useDispatch} from "react-redux";
+import {useEffect} from "react";
+import {setUser} from "./store/userSlice.ts";
+import {api} from "./api.ts";
 
 const theme = createTheme({
     palette: {
@@ -38,10 +47,13 @@ const theme = createTheme({
             }
         },
         MuiCard: {
+            defaultProps: {
+                elevation: 2
+            },
             styleOverrides: {
                 root: {
-                    padding: '10px'
-                }
+                    padding: '10px',
+                },
             }
         },
         MuiButton: {
@@ -50,36 +62,70 @@ const theme = createTheme({
                     textTransform: 'none'
                 }
             }
-        }
+        },
     }
 });
 
+
 const router = createBrowserRouter([
     {
-        element: <MainLayout />,
+        element: <ProtectedRoute />,
         children: [
-            { path: "/", element: <Feed /> },
-            // { path: "/popular", element: <PopularPage /> },
-            { path: "/communities", element: <Communities /> },
-            { path: "/create", element: <CreatePost /> },
-            { path: "/user", element: <User /> },
-        ],
+            {
+                element: <MainLayout />,
+                children: [
+                    { path: "/", element: <Feed /> },
+                    { path: "/popular", element: <Popular /> },
+                    { path: "/communities", element: <Communities /> },
+                    { path: "/create", element: <CreatePost /> },
+                    { path: "/user", element: <User /> },
+                    { path: "/post", element: <PostComments /> }
+                ]
+            }
+        ]
     },
     {
-        element: <AuthLayout />,
+        element: <GuestRoute />,
         children: [
-            { path: "/login", element: <Auth /> },
-            // { path: "/register", element: <RegisterPage /> },
-        ],
-    },
+            {
+                element: <AuthLayout />,
+                children: [
+                    { path: "/auth", element: <Auth /> },
+                    { path: "/register", element: <Register /> }
+                ]
+            }
+        ]
+    }
 ]);
 
 function App() {
 
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const fetchMe = async () => {
+            const token = localStorage.getItem("token");
+
+            if (!token) return;
+
+            try {
+                const { data } = await api.get(
+                    "/auth/me"
+                );
+
+                dispatch(setUser(data));
+            } catch {
+                localStorage.removeItem("token");
+            }
+        };
+
+        fetchMe();
+    }, []);
+
     return (
             <ThemeProvider theme={theme} >
                 <CssBaseline />
-                <RouterProvider router={router} />
+                    <RouterProvider router={router} />
             </ThemeProvider>
     )
 }

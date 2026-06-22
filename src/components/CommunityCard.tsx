@@ -5,11 +5,11 @@ import {formatNumber} from "../mainCode.ts";
 export function CommunityCard() {
     const {t} = useTranslation('auth');
     return (
-        <Card sx={{p: 0, backgroundColor: "background.paper"}} elevation={3}>
+        <Card sx={{p: 0}}>
             <CardMedia
                 component="img"
                 height="auto"
-                image="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%2Fid%2FOIP.Gt-JCqjl4zNednZzzyxrZAHaEK%3Fpid%3DApi&f=1&ipt=f2eaa939818f60cabed7a08b1548d6ca11df62744b857b0ff8996623f2691ea2&ipo=images"
+                image="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimg.freepik.com%2Fpremium-photo%2Fai-machine-learning-hands-robot-human-touching-big-data-network-connection-background-science-artificial-intelligence-technology-innovation-futuristic_999327-86059.jpg%3Fw%3D2000&f=1&nofb=1&ipt=82bbc0bd8fcc718c24749d9184c64d005357c989e6ba31e53afe988acf1256bf"
                 alt="CardImage"
                 sx={{
                     width: '100%',

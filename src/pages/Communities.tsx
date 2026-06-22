@@ -34,6 +34,7 @@ export function Communities() {
                 />
             </Box>
             <CommunityCard/>
+            <CommunityCard/>
         </Stack>
     )
 }
