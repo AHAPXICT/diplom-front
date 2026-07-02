@@ -30,7 +30,7 @@ const userSlice = createSlice({
             state.email = action.payload.email;
             state.profilePicture = action.payload.profilePicture;
             state.isAuth = true;
-            state.birthday = action.payload.birthDate;
+            state.birthday = action.payload.birthday;
             state.about = action.payload.about;
         },
 

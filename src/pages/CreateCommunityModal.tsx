@@ -2,6 +2,8 @@ import {type ChangeEvent, useState} from "react";
 import {Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography} from "@mui/material";
 import ImageIcon from "@mui/icons-material/Image";
 import {useTranslation} from "react-i18next";
+import {useForm} from "react-hook-form";
+import {api} from "../api.ts";
 
 type CreateCommunityData = {
     name: string;
@@ -15,21 +17,83 @@ type Props = {
     onCreate: (data: CreateCommunityData) => void;
 };
 
+type CommunityForm = {
+    name: string;
+    description: string;
+};
+
 export function CreateCommunityModal({ open, onClose, onCreate,}: Props) {
     const {t} = useTranslation('auth');
 
-    const [name, setName] = useState<string>("");
-    const [description, setDescription] = useState<string>("");
     const [image, setImage] = useState<File | null>(null);
 
-    const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] || null;
+    const {
+        register,
+        handleSubmit,
+        setError,
+        reset,
+        formState: { errors, isSubmitting }
+    } = useForm<CommunityForm>();
+
+    const handleImageChange = (
+        e: ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = e.target.files?.[0];
+
+        if (!file) return;
+
+        if (file.size > 10 * 1024 * 1024) {
+            alert(t('common:imageMaxSize', {count: 10}));
+            return;
+        }
+
         setImage(file);
     };
 
-    const handleCreate = () => {
-        onCreate({name, description, image});
-        onClose();
+    const handleCreate = async (
+        data: CommunityForm
+    ) => {
+        try {
+
+            const formData = new FormData();
+
+            formData.append("name", data.name);
+            formData.append(
+                "description",
+                data.description || ""
+            );
+
+            if (image) {
+                formData.append(
+                    "communityImage",
+                    image
+                );
+            }
+
+            const response = await api.post(
+                "/communities",
+                formData
+            );
+
+            onCreate(response.data);
+
+            reset();
+            setImage(null);
+
+            onClose();
+
+        } catch (err: any) {
+
+            const message = err.response?.data?.message;
+
+                console.log(err)
+                console.log(message)
+            setError("root", {
+                type: "server",
+                message:
+                    message || t('common:communityCreateError')
+            });
+        }
     };
 
     return (
@@ -41,8 +105,20 @@ export function CreateCommunityModal({ open, onClose, onCreate,}: Props) {
                     label={t('common:name')}
                     fullWidth
                     margin="normal"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+
+                    error={!!errors.name}
+                    helperText={errors.name?.message}
+                    {...register("name", {
+                        required: t('common:enterName'),
+                        minLength: {
+                            value: 3,
+                            message: t('common:minSymbols', { count: 3 })
+                        },
+                        maxLength: {
+                            value: 50,
+                            message: t('common:maxSymbols', { count: 50 })
+                        }
+                    })}
                 />
 
                 <TextField
@@ -51,8 +127,16 @@ export function CreateCommunityModal({ open, onClose, onCreate,}: Props) {
                     multiline
                     rows={4}
                     margin="normal"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+
+                    error={!!errors.description}
+                    helperText={errors.description?.message}
+
+                    {...register("description", {
+                        maxLength: {
+                            value: 500,
+                            message: t('common:maxSymbols', {count: 500})
+                        }
+                    })}
                 />
 
                 <Box mt={2}>
@@ -72,10 +156,15 @@ export function CreateCommunityModal({ open, onClose, onCreate,}: Props) {
                     )}
                 </Box>
             </DialogContent>
-
+            {errors.root && (
+                <Typography color="error">
+                    {errors.root.message}
+                </Typography>
+            )}
             <DialogActions>
                 <Button onClick={onClose}>{t('common:cancel')}</Button>
-                <Button variant="contained" onClick={handleCreate}>
+                <Button variant="contained"  onClick={handleSubmit(handleCreate)}
+                        disabled={isSubmitting}>
                     {t('common:create')}
                 </Button>
             </DialogActions>

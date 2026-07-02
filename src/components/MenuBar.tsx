@@ -8,7 +8,8 @@ import {
     List,
     ListItem,
     ListItemButton,
-    ListItemText, type SvgIconProps,
+    ListItemText,
+    type SvgIconProps,
     Toolbar,
     useMediaQuery,
     useTheme
@@ -26,7 +27,9 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {useTranslation} from "react-i18next";
 import {useState} from "react";
 import type {LinkProps} from "react-router";
-import { Link } from 'react-router';
+import {Link} from 'react-router';
+import {useSelector} from "react-redux";
+import {LanguageSwitcher} from "./LanguageSwitcher.tsx";
 
 type NavItem = {
     key: string;
@@ -42,10 +45,22 @@ export function MenuBar() {
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const {t} = useTranslation('auth');
 
+    const user = useSelector((state: any) => state.user);
+
     const navItems: NavItem[] = [
         {key: "common:home", icon: HomeIcon, onClick: () => console.log("Navigate to Home"), to: "/"},
-        {key: "common:popular", icon: TrendingUpIcon, onClick: () => console.log("Navigate to Popular"), to: "/popular"},
-        {key: "common:communities", icon: PeopleIcon, onClick: () => console.log("Navigate to Communities"), to: "/communities"},
+        {
+            key: "common:popular",
+            icon: TrendingUpIcon,
+            onClick: () => console.log("Navigate to Popular"),
+            to: "/popular"
+        },
+        {
+            key: "common:communities",
+            icon: PeopleIcon,
+            onClick: () => console.log("Navigate to Communities"),
+            to: "/communities"
+        },
         {key: "common:create", icon: AddIcon, onClick: () => console.log("Navigate to Communities"), to: "/create"},
     ];
 
@@ -95,7 +110,7 @@ export function MenuBar() {
                             onClick={toggleDrawer(true)}
                             sx={{mr: 2}}
                         >
-                                <MenuIcon/>
+                            <MenuIcon/>
                         </IconButton>
                     )}
                     <SiteMark/>
@@ -109,7 +124,7 @@ export function MenuBar() {
                                         color="inherit"
                                         component={Link}
                                         to={item.to}
-                                        startIcon={<Icon />}
+                                        startIcon={<Icon/>}
                                     >
                                         {t(item.key)}
                                     </Button>
@@ -118,39 +133,40 @@ export function MenuBar() {
                         </Box>
                     )}
                     <Box sx={{flexGrow: 1}}/>
-                    <Box sx={{display: {xs: 'none', md: 'flex'}}}>
-                        <IconButton size="large" aria-label="show 4 new mails" color="inherit">
-                            <Badge badgeContent={35} color="error">
-                                <MailIcon/>
-                            </Badge>
-                        </IconButton>
-                        <IconButton
-                            size="large"
-                            color="inherit"
-                        >
-                            <Badge badgeContent={242} color="error">
-                                <NotificationsIcon/>
-                            </Badge>
-                        </IconButton>
+                    <Box sx={{display: {md: 'flex'}}}>
+                        {/*<IconButton size="large" aria-label="show 4 new mails" color="inherit">*/}
+                        {/*    <Badge badgeContent={35} color="error">*/}
+                        {/*        <MailIcon/>*/}
+                        {/*    </Badge>*/}
+                        {/*</IconButton>*/}
+                        {/*<IconButton*/}
+                        {/*    size="large"*/}
+                        {/*    color="inherit"*/}
+                        {/*>*/}
+                        {/*    <Badge badgeContent={242} color="error">*/}
+                        {/*        <NotificationsIcon/>*/}
+                        {/*    </Badge>*/}
+                        {/*</IconButton>*/}
+                        <LanguageSwitcher />
                         <IconButton
                             size="large"
                             edge="end"
                             component={Link}
-                            to={'/user'}
+                            to={`/user/${user.username}`}
                             //onClick={handleProfileMenuOpen}
                             color="inherit"
                         >
                             <AccountCircle/>
                         </IconButton>
                     </Box>
-                    <Box sx={{display: {xs: 'flex', md: 'none'}}}>
-                        <IconButton
-                            size="large"
-                            color="inherit"
-                        >
-                            <MoreIcon/>
-                        </IconButton>
-                    </Box>
+                    {/*<Box sx={{display: {xs: 'flex', md: 'none'}}}>*/}
+                    {/*    <IconButton*/}
+                    {/*        size="large"*/}
+                    {/*        color="inherit"*/}
+                    {/*    >*/}
+                    {/*        <MoreIcon/>*/}
+                    {/*    </IconButton>*/}
+                    {/*</Box>*/}
                 </Toolbar>
             </AppBar>
             <Drawer sx={{

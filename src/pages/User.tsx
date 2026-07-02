@@ -1,16 +1,19 @@
-import {Avatar, Box, Card, Divider, Stack, Tab, Tabs, Typography} from "@mui/material";
+import {Avatar, Box, Button, Card, Divider, Skeleton, Stack, Tab, Tabs, Typography} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import {PostCard} from "../components/PostCard.tsx";
 import {BackToFeedButton} from "../components/BackToFeedButton.tsx";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {styled} from "@mui/material/styles";
 import LogOutButton from "../components/LogOutButton.tsx";
 import {ChangeProfileButton} from "../components/ChangeProfileButton.tsx";
-import type {Post} from "../mockData.ts";
+import {useParams} from "react-router";
+import {api} from "../api.ts";
+import {useSelector} from "react-redux";
+import type {Post} from "../types.ts";
 
 function TextElement({text, label}: { text: string, label: string }) {
     return <Box>
-        <Typography variant="h6" fontWeight="bold">
+        <Typography textAlign='center' variant="h6" fontWeight="bold">
             {text}
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -42,6 +45,11 @@ export default function User() {
     const {t} = useTranslation('auth');
     const [tab, setTab] = useState<number>(0);
 
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingPosts, setLoadingPosts] = useState(false);
+
     const handleChange = (
         _event: React.SyntheticEvent,
         newValue: number
@@ -49,14 +57,110 @@ export default function User() {
         setTab(newValue);
     };
 
-    const [username, setUsername] = useState<string>("");
-    const [birthday, setBirthday] = useState<string>("");
-    const [rating, setRating] = useState<number>(0);
-    const [postsNumber, setPostsNumber] = useState<number>(0);
-    const [commentsNumber, setCommentsNumber] = useState<number>(0);
+    const {username} = useParams();
 
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [about, setAbout] = useState<string>(t('common:nothingAbout'));
+    useEffect(() => {
+        if (!username) return;
+
+        const fetchProfile = async () => {
+            const {data} = await api.get(`/user/${username}`);
+            setProfile(data);
+        };
+        fetchProfile();
+    }, [username]);
+
+    useEffect(() => {
+        if (!username) return;
+
+        setPosts([]);
+        setPage(1);
+        setHasMore(true);
+
+        const fetchPosts = async () => {
+            try {
+                setLoadingPosts(true);
+                const {data} = await api.get(`/user/${username}/posts?page=1`);
+                setPosts(data.posts);
+                setHasMore(data.hasMore);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoadingPosts(false);
+            }
+        };
+
+        fetchPosts();
+    }, [username]);
+
+    const loadMore = async () => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+
+        try {
+            setLoadingPosts(true);
+            const {data} = await api.get(`/user/${username}/posts?page=${nextPage}`);
+            setPosts(prev => [...prev, ...data.posts]);
+            setHasMore(data.hasMore);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingPosts(false);
+        }
+    };
+
+    const [profile, setProfile] = useState<any>(null);
+    const currentUser = useSelector(
+        (state: any) => state.user
+    );
+    const isOwnProfile =
+        currentUser.id === profile?.id;
+
+    if (!profile) {
+        return (
+            <Box>
+                <BackToFeedButton/>
+
+                <Card sx={{p: 0, my: 2}}>
+                    <Box
+                        sx={{
+                            background: "linear-gradient(90deg, #5f9cff, #7b4dff)",
+                            height: 140
+                        }}
+                    />
+
+                    <Box sx={{m: 2}}>
+                        <Box sx={{display: "flex", height: 80}}>
+                            <Skeleton
+                                variant="circular"
+                                width={100}
+                                height={100}
+                                sx={{mt: -6}}
+                            />
+
+                            <Box sx={{ml: 2, flex: 1}}>
+                                <Skeleton width={200} height={40}/>
+                                <Skeleton width={150} height={25}/>
+                            </Box>
+                        </Box>
+
+                        <Divider sx={{my: 2}}/>
+
+                        <Stack direction="row" spacing={4}>
+                            <Skeleton width={80} height={50}/>
+                            <Skeleton width={80} height={50}/>
+                            <Skeleton width={80} height={50}/>
+                        </Stack>
+                    </Box>
+                </Card>
+
+                <Card>
+                    <Skeleton height={50}/>
+                    <Skeleton height={100}/>
+                    <Skeleton height={100}/>
+                </Card>
+            </Box>
+        );
+    }
 
     return (
         <Box>
@@ -64,8 +168,15 @@ export default function User() {
             <Card sx={{p: 0, my: 2}}>
                 <Box sx={{background: "linear-gradient(90deg, #5f9cff, #7b4dff)", height: 140}}/>
                 <Box sx={{position: "relative", m: 2}}>
-                    <Box sx={{display: "flex", height: 80}} >
+                    <Box sx={{display: "flex", height: 80}}>
                         <Avatar
+                            src={
+                                       profile?.profilePicture
+                                           ? (profile.profilePicture.startsWith('http')
+                                               ? profile.profilePicture
+                                               : import.meta.env.VITE_API_URL + profile.profilePicture)
+                                           : undefined
+                                   }
                             sx={{
                                 width: 100,
                                 height: 100,
@@ -74,24 +185,30 @@ export default function User() {
                                 top: -50,
                             }}
                         />
-                        <Typography variant="h5" fontWeight="bold" component="div">{username}</Typography>
-                        <Box sx={{ flexGrow: 1 }} />
-                        <LogOutButton />
+                        <Typography variant="h5" fontWeight="bold" component="div">{profile.username}</Typography>
+                        <Box sx={{flexGrow: 1}}/>
+                        {isOwnProfile && (<LogOutButton/>)}
                     </Box>
                     <Box sx={{}}>
                         <Typography variant="body2" color="text.secondary">
-                            🎂 {t('common:cakeDay')}: {birthday}
+                            🎂 {t('common:cakeDay')}: {
+                            profile.birthday ? new Date(profile.birthday).toLocaleDateString('ru-RU')
+                                : '-'}
                         </Typography>
                     </Box>
 
                     <Divider sx={{my: 2}}/>
 
                     <Stack direction="row" alignItems='center' spacing={4}>
-                            <TextElement text={rating.toString()} label={t("common:karma")}></TextElement>
-                            <TextElement text={postsNumber.toString()} label={t("common:posts")}></TextElement>
-                            <TextElement text={commentsNumber.toString()} label={t("common:comments")}></TextElement>
-                        <Box sx={{ flexGrow: 1 }} />
-                            <ChangeProfileButton />
+                        <TextElement text={profile.rating.toString()} label={t("common:karma")}></TextElement>
+                        <TextElement text={profile._count.posts.toString()} label={t("common:posts")}></TextElement>
+                        <TextElement text={profile._count.comments.toString()}
+                                     label={t("common:comments")}></TextElement>
+                        <Box sx={{flexGrow: 1}}/>
+                        {isOwnProfile && (<ChangeProfileButton
+                            profile={profile}
+                            onProfileUpdated={setProfile}
+                        />)}
                     </Stack>
                 </Box>
             </Card>
@@ -122,14 +239,42 @@ export default function User() {
                 </Tabs>
                 <Box sx={{m: 2}}>
                     <TabPanelNoPadding value={tab} index={0}>
-                        {/*если нету постов то юзать nothingPosts*/}
-                        {posts.map((post, index) => (
-                            <PostCard />
-                        ))}
-                        <PostCard/>
+                        <Box gap={3} display='flex' flexDirection='column'>
+                        {loadingPosts ? (
+                            <>
+                                <Skeleton height={120}/>
+                                <Skeleton height={120}/>
+                                <Skeleton height={120}/>
+                            </>
+                        ) : posts.length === 0 ? (
+                            <Typography
+                                color="text.secondary"
+                                textAlign="center"
+                                sx={{py: 4}}
+                            >
+                                {t('common:nothingPosts')}
+                            </Typography>
+                        ) : (
+                            posts.map((post) => (
+                                <PostCard
+                                    key={post.id}
+                                    post={post}
+                                />
+                            ))
+                        )}
+                        {hasMore && (
+                            <Button onClick={loadMore}>
+                                {t('common:loadMore')}
+                            </Button>
+                        )}
+                        </Box>
                     </TabPanelNoPadding>
                     <TabPanelNoPadding value={tab} index={1}>
-                        <Typography>{about}</Typography>
+                        <Typography
+                            color="text.secondary"
+                            textAlign="center"
+                            sx={{py: 4}}
+                        >{profile.about || t('common:nothingAbout')}</Typography>
                     </TabPanelNoPadding>
                 </Box>
             </Card>

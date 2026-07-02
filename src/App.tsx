@@ -78,8 +78,9 @@ const router = createBrowserRouter([
                     { path: "/popular", element: <Popular /> },
                     { path: "/communities", element: <Communities /> },
                     { path: "/create", element: <CreatePost /> },
-                    { path: "/user", element: <User /> },
-                    { path: "/post", element: <PostComments /> }
+                    { path: "/user/:username", element: <User /> },
+                    { path: "/posts/:id/reply", element: <CreatePost /> },
+                    { path: "/posts/:id", element: <PostComments /> }
                 ]
             }
         ]
@@ -104,7 +105,7 @@ function App() {
 
     useEffect(() => {
         const fetchMe = async () => {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
             if (!token) return;
 

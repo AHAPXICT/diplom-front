@@ -1,38 +1,89 @@
-import {Card, CardContent, Typography, Button, CardMedia, Chip, Box} from '@mui/material';
+import {Card, CardContent, Typography, Button, CardMedia, Chip, Box, } from '@mui/material';
 import {useTranslation} from "react-i18next";
-import {formatNumber} from "../mainCode.ts";
+import type {Community} from "../types.ts";
 
-export function CommunityCard() {
-    const {t} = useTranslation('auth');
+interface Props {
+    community: Community;
+
+    onJoin?: (communityId: number) => void;
+    onLeave?: (communityId: number) => void;
+}
+
+export function CommunityCard({ community, onJoin, onLeave }: Props) {
+    const {t} = useTranslation();
+
     return (
-        <Card sx={{p: 0}}>
+        <Card sx={{ p: 0 }}>
             <CardMedia
                 component="img"
-                height="auto"
-                image="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimg.freepik.com%2Fpremium-photo%2Fai-machine-learning-hands-robot-human-touching-big-data-network-connection-background-science-artificial-intelligence-technology-innovation-futuristic_999327-86059.jpg%3Fw%3D2000&f=1&nofb=1&ipt=82bbc0bd8fcc718c24749d9184c64d005357c989e6ba31e53afe988acf1256bf"
-                alt="CardImage"
+                image={
+                    community.imageUrl
+                        ? (community.imageUrl.startsWith('http')
+                            ? community.imageUrl
+                            : import.meta.env.VITE_API_URL + community.imageUrl)
+                        : import.meta.env.VITE_API_URL + "/uploads/communities/community-placeholder.jpg"
+                }
+                alt={community.name}
                 sx={{
-                    width: '100%',
-                    objectFit: 'cover',
+                    width: "100%",
                     height: 120,
+                    objectFit: "cover"
                 }}
             />
-            <CardContent sx={{pb: 0}}>
-                <Typography variant="h6" component="div">
-                    r/Technology
+
+            <CardContent>
+
+                <Typography
+                    variant="h6"
+                    component="div"
+                >
+                    {community.name}
                 </Typography>
-                <Typography variant="body2" sx={{mt: 1, mb: 2}} color="text.secondary">
-                    All things tech - news, discussions, and debates
+
+                <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                        mt: 1,
+                        mb: 2
+                    }}
+                >
+                    {community.description ||
+                        t("common:nothingAbout")}
                 </Typography>
-                <Box display='flex' alignItems='center' flexDirection='row' justifyContent='space-between'>
-                    <Chip variant="outlined" sx={{color: 'primary.main', borderColor: 'primary.main'}} label={formatNumber(421234) + ' ' + t('common:members')} />
+
+                <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                >
+                    <Chip
+                        variant="outlined"
+                        label={t("common:members", {
+                            count: community.membersCount
+                        })}
+                    />
+
                     <Button
-                        variant="contained"
-                        sx={{
-                            width: '30%',
-                        }}
+                        variant={
+                            community.isMember
+                                ? "outlined"
+                                : "contained"
+                        }
+                        color={
+                            community.isMember
+                                ? "error"
+                                : "primary"
+                        }
+                        onClick={() =>
+                            community.isMember
+                                ? onLeave?.(community.id)
+                                : onJoin?.(community.id)
+                        }
                     >
-                        {t('common:joinCommunity')}
+                        {community.isMember
+                            ? t("common:leaveCommunity")
+                            : t("common:joinCommunity")}
                     </Button>
                 </Box>
 

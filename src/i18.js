@@ -18,14 +18,12 @@ const resources = {
     }
 };
 
-
 i18n
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
         resources,
-        //lng: "ru",
-        fallbackLng: "en",
+        fallbackLng: "ru",
         load: "languageOnly",
         defaultNS: "common",
         ns: ['common', 'auth'],
@@ -36,8 +34,8 @@ i18n
         detection: {
             order: ['localStorage', 'navigator'],
             caches: ['localStorage'],
+            lookupLocalStorage: 'language',
         }
-
     });
 
 export default i18n;

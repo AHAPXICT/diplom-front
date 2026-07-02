@@ -1,4 +1,16 @@
-import {Button, Card, Checkbox, Container, Divider, FormControlLabel, Link, Stack, TextField, Typography} from "@mui/material";
+import {
+    Box,
+    Button,
+    Card,
+    Checkbox,
+    Container,
+    Divider,
+    FormControlLabel,
+    Link,
+    Stack,
+    TextField,
+    Typography
+} from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google"
 import SiteMark from "../components/SiteMark.tsx";
 import {useTranslation} from "react-i18next";
@@ -7,6 +19,9 @@ import {api} from "../api.ts";
 import {useState} from "react";
 import {useDispatch} from "react-redux";
 import {setUser} from "../store/userSlice.ts";
+import {useForm} from "react-hook-form";
+import {YandexIcon} from "./Auth.tsx";
+import {LanguageSwitcher} from "../components/LanguageSwitcher.tsx";
 
 export default function Register() {
     const { t } = useTranslation('auth');
@@ -20,27 +35,18 @@ export default function Register() {
         username: string;
         email: string;
         password: string;
-        repeatPassword: string;
     };
 
     const {
         register,
         handleSubmit,
-        watch,
         setError,
-        formState: { errors, isSubmitting }
+        formState: { errors }
     } = useForm<RegisterFormValues>();
 
-
-
-    const register = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (formData: RegisterFormValues) => {
         try {
-            const { data } = await api.post('/auth/register', {
-                username,
-                email,
-                password
-            });
+            const { data } = await api.post('/auth/register', formData);
 
             if (rememberMe) {
                 localStorage.setItem('token', data.token);
@@ -49,9 +55,30 @@ export default function Register() {
             }
 
             dispatch(setUser(data.user));
+
             navigate('/');
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            console.log(err.response);
+            const message = err.response?.data?.message;
+
+            if (message?.includes('email')) {
+                setError('email', {
+                    type: 'server',
+                    message
+                });
+            }
+            else if (message?.includes('username')) {
+                setError('username', {
+                    type: 'server',
+                    message
+                });
+            }
+            else {
+                setError('root', {
+                    type: 'server',
+                    message: message || 'Ошибка регистрации'
+                });
+            }
         }
     };
 
@@ -59,22 +86,71 @@ export default function Register() {
         <Container
             sx={{justifyContent: "center", alignItems: "center", display: "flex", minHeight: "100%", height: "90dvh"}}>
             <Card sx={{maxWidth: "450px", flex: 1, padding: "40px"}}>
-                <Stack component='form' onSubmit={register} sx={{}}>
+                <Stack autoComplete='on' component='form' onSubmit={handleSubmit(onSubmit)} sx={{}}>
                     <SiteMark />
-                    <Typography sx={{mt: 2, mb: 1}} component='h3' variant='h4'>{t('signUp')}</Typography>
-                    <TextField value={username} onChange={(e) => setUsername(e.target.value)} variant='outlined' label={t('common:username')}/>
-                    <TextField placeholder="email@mail.ru" value={email} onChange={(e) => setEmail(e.target.value)} variant='outlined' label={t('email')} autoComplete='email'/>
-                    <TextField value={password} onChange={(e) => setPassword(e.target.value)} placeholder="**********" variant='outlined' label={t('password')} autoComplete='password' type='password'/>
+                    <Box display='flex' justifyContent='space-between' alignItems='center'>
+                        <Typography sx={{marginTop: "10px"}} component='h1' variant='h4'>{t('signUp')}</Typography>
+                        <LanguageSwitcher />
+                    </Box>
+                    <TextField
+                        {...register('username', {
+                            required: t('common:enterUsername'),
+                            minLength: {
+                                value: 3,
+                                message: t('common:minSymbols', {count: 3})
+                            },
+                            maxLength: {
+                                value: 32,
+                                message: t('common:maxSymbols', {count: 32})
+                            }
+                        })}
+                        error={!!errors.username}
+                        helperText={errors.username?.message}
+                        variant='outlined'
+                        label={t('common:username')}/>
+                    <TextField placeholder="email@mail.ru"
+                               error={!!errors.email}
+                               helperText={errors.email?.message}
+                               {...register('email', {
+                                   required: t('common:enterEmail'),
+                                   pattern: {
+                                       value: /\S+@\S+\.\S+/,
+                                       message: t('common:incorrectEmail')
+                                   }
+                               })}
+                               variant='outlined' label={t('email')}   autoComplete="username" />
+                    <TextField
+                        error={!!errors.password}
+                        helperText={errors.password?.message}
+                        {...register('password', {
+                            required: t('common:enterPassword'),
+                            minLength: {
+                                value: 8,
+                                message: t("common:minSymbols", { count: 8 })
+                            },
+                            maxLength: {
+                                value: 64,
+                                message: t("common:maxSymbols", { count: 64 })
+                            }
+                        })}
+                        placeholder="**********" variant='outlined' label={t('password')} autoComplete='password' type='password'/>
                     <FormControlLabel
                         control={<Checkbox value="Remember me"  checked={rememberMe}
                                            onChange={(e) => setRememberMe(e.target.checked)} color="primary" />}
                         label={t('rememberMe')}
                     />
+                    {errors.root && (
+                        <Typography color="error">
+                            {errors.root.message}
+                        </Typography>
+                    )}
                     <Button sx={{marginTop: "10px"}} type='submit' variant='contained'>{t('signUp')}</Button>
                     <Divider>
                         <Typography sx={{ color: 'text.secondary' }}>{t('common:or')}</Typography>
                     </Divider>
-                    <Button startIcon={<GoogleIcon/>} variant="outlined">{t('signInGoogle')}</Button>
+                    {/*<Button startIcon={<YandexIcon />} variant="outlined">*/}
+                    {/*    {t('signInYandex')}*/}
+                    {/*</Button>*/}
                     <Typography sx={{ textAlign: 'center' }}>
                         {t('alreadyHaveAnAccount')}{' '}
                         <Link
